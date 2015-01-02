@@ -13,24 +13,33 @@ logging.debug("Database connection established.")
 
 def put(name, snippet):
   '''
-  Store a snippet with an associated name.
-  
+  Store a snippet with an associated name. 
   Returns the name of the snippet
   '''
-  logging.error("FIXME: Unimplemented - put({!r}, {!r})".format(name, snippet))
+  logging.info("Storing put snippet ({!r}: {!r})".format(name, snippet))
+  # Add the database bits as suggested in Unit 2 Lesson 1.4
+  cursor = connection.cursor()
+  command = "INSERT INTO snippets (keyword, message) VALUES (%s, %s)"
+  cursor.execute(command, (name, snippet))
+  connection.commit()
+  logging.debug("Snippet stored successfully.")
   return name, snippet
 
 def get(name):
   '''
   Retrieve the snippet with a given name.
-  
   If there is no such snippet... # Discuss with Carl (return a blank string?)
-  
   Return the snippet.
   '''
-  logging.error("FIXME: Unimplemented - get({!r})".format(name))
-  #TO-DO: Check the return value is correct?
-  return name #""
+  logging.info("Getting snippet {!r}".format(name))
+  #Add the database connection and command statement for the challenge in Unit 2 lesson 1.4
+  cursor = connection.cursor()
+  command = "SELECT keyword, message FROM snippets WHERE keyword = %s"
+  cursor.execute(command, (name))
+  #logging.debug("COMMAND: ".format(command)
+  connection.commit()
+  logging.debug("Select snippet retrieved the record successfully.")
+  return cursor.fetchone()
 
 # Add a snippet for delete?
 def delete(name):
@@ -65,8 +74,8 @@ def main():
       name, snippet = put(**arguments)
       print("Stored {!r} as {!r}".format(snippet, name))
     elif command == "get":
-      snippet = get(**arguments)
-      print("Retrieved snippet: {!r}".format(snippet))
+      name = get(**arguments)
+      print("Retrieved snippet: {!r}".format(name))
 
 if __name__ == "__main__":
     main()
