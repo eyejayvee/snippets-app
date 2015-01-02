@@ -34,8 +34,7 @@ def get(name):
   logging.info("Getting snippet {!r}".format(name))
   #Add the database connection and command statement for the challenge in Unit 2 lesson 1.4
   cursor = connection.cursor()
-  command = "SELECT * FROM snippets WHERE keyword = %s"
-  cursor.execute(command, (name))
+  cursor.execute("SELECT * FROM snippets WHERE keyword = %s", (name))
   #logging.debug("COMMAND: ".format(command)
   row = cursor.fetchone()
   connection.commit()
@@ -72,13 +71,17 @@ def main():
     #Convert parsed arguments from the Namespace to dictionary
     arguments = vars(arguments)
     command = arguments.pop("command")
+    # added on Carls advice
+    name = arguments.pop("name")
     
     if command == "put":
       name, snippet = put(**arguments)
       print("Stored {!r} as {!r}".format(snippet, name))
     elif command == "get":
-      name = get(arguments)
-      print("Retrieved snippet: {!r}".format(name))
+      #name = get(arguments)
+      # changed on Carls advice
+      result = get(name)
+      print("Retrieved snippet: {!r}".format(result))
 
 if __name__ == "__main__":
     main()
