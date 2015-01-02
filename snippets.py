@@ -34,12 +34,13 @@ def get(name):
   logging.info("Getting snippet {!r}".format(name))
   #Add the database connection and command statement for the challenge in Unit 2 lesson 1.4
   cursor = connection.cursor()
-  command = "SELECT keyword, message FROM snippets WHERE keyword = %s"
+  command = "SELECT * FROM snippets WHERE keyword = %s"
   cursor.execute(command, (name))
   #logging.debug("COMMAND: ".format(command)
+  row = cursor.fetchone()
   connection.commit()
   logging.debug("Select snippet retrieved the record successfully.")
-  return cursor.fetchone()
+  return row[0]
 
 # Add a snippet for delete?
 def delete(name):
@@ -54,7 +55,7 @@ def main():
     subparsers = parser.add_subparsers(dest="command", help="Available commands")
     
     #Subparser for the put command
-    logging.debug("Constructing put subparser")
+    logging.debug("Constructing 'put' subparser")
     put_parser = subparsers.add_parser("put", help="Store 'put' a snippet")
     put_parser.add_argument("name", help="The name of the 'put' snippet")
     put_parser.add_argument("snippet", help="The 'put' snippet text")
@@ -62,7 +63,7 @@ def main():
     #Subparser for the get command
     logging.debug("Constructing the 'get' subparser")
     get_parser = subparsers.add_parser("get", help="Store a 'get' snippet")
-    #TO-DO: Check with Carl if I add the name or the snippet here
+    #TO-DO: Check with Carl if I add the name or the snippet here - name seems to make sense
     get_parser.add_argument("name", help="The name of the 'get' snippet")
     
     arguments = parser.parse_args(sys.argv[1:])
@@ -74,7 +75,7 @@ def main():
       name, snippet = put(**arguments)
       print("Stored {!r} as {!r}".format(snippet, name))
     elif command == "get":
-      name = get(**arguments)
+      name = get(arguments)
       print("Retrieved snippet: {!r}".format(name))
 
 if __name__ == "__main__":
