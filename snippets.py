@@ -48,7 +48,9 @@ def delete(name):
   return name
 
 def main():
-    """Main function"""
+    """
+    Main function
+    """
     logging.info("Constructing parser")
     parser = argparse.ArgumentParser(description="Store and retrieve snippets of text")
     
