@@ -18,17 +18,23 @@ def put(name, snippet):
   '''
   logging.info("Storing put snippet ({!r}: {!r})".format(name, snippet))
   # Add the database bits as suggested in Unit 2 Lesson 1.4
-  cursor = connection.cursor()
-    
-  try:
-    print "in try"
+  # changed the cursor by adding a with as described in Unit 2 Lesson 1.5
+  with connection, connection.cursor() as cursor:
     command = "insert into snippets values (%s, %s)"
     cursor.execute(command, (name, snippet))
-  except psycopg2.IntegrityError as e:
-    print "In fail"
-    connection.rollback()
-    command = "update snippets set message=%s where keyword=%s"
-    cursor.execute(command, (snippet, name))
+    
+  ## I have removed the try / except becaus the with does the rollback but not the UPDATE. I am a little confused by that
+  ## TODO: Chat with Carl
+    
+#  try:
+#    #print "in try"
+#    command = "insert into snippets values (%s, %s)"
+#    cursor.execute(command, (name, snippet))
+#  except psycopg2.IntegrityError as e:
+#    #print "In fail"
+#    connection.rollback()
+#    command = "update snippets set message=%s where keyword=%s"
+#    cursor.execute(command, (snippet, name))
     
   # Don't forget the commit
   connection.commit()
@@ -64,11 +70,24 @@ def get(name):
   
   return row[0]
 
+# Added for Unit 2 Lesson 1 Point 5
+def catalog():
+  logging.info("Retrieving all of the keywords for review.")
+  
+  with connection, connection.cursor() as cursor:
+    cursor.execute("SELECT keyword FROM snippets ORDER BY keyword")
+    rows = cursor.fetchall()
+    
+  connection.commit()
+  
+  print rows
+
 # Add a snippet for delete?
 def delete(name):
   logging.error("FIXME: Unimplemented - delete({!r})".format(name))
   return name
 
+  
 def main():
     """
     Main function
@@ -86,9 +105,14 @@ def main():
     
     #Subparser for the get command
     logging.debug("Constructing the 'get' subparser")
-    get_parser = subparsers.add_parser("get", help="Store a 'get' snippet")
+    get_parser = subparsers.add_parser("get", help="Retrieve a snippet using 'get'")
     get_parser.add_argument("name", help="The name of the 'get' snippet")
+     
+    #Subparser for the catalog command
+    logging.debug("Constructing the 'catalog' subparser")
+    get_parser = subparsers.add_parser("catalog", help="Retrieve all keywords using 'catalog' ")
     
+    #Subparser commands
     arguments = parser.parse_args(sys.argv[1:])
     #Convert parsed arguments from the Namespace to dictionary
     arguments = vars(arguments)
@@ -100,6 +124,9 @@ def main():
     elif command == "get":
       result = get(**arguments)
       print("Retrieved snippet: {!r}".format(result))
+    elif command == "catalog":
+      listing = catalog()
+      #print("Retrieved snippet all keywords form Snippets".format(result))
 
 if __name__ == "__main__":
     main()
