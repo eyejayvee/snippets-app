@@ -19,9 +19,22 @@ def put(name, snippet):
   logging.info("Storing put snippet ({!r}: {!r})".format(name, snippet))
   # Add the database bits as suggested in Unit 2 Lesson 1.4
   cursor = connection.cursor()
-  command = "INSERT INTO snippets (keyword, message) VALUES (%s, %s)"
-  cursor.execute(command, (name, snippet))
+    
+  try:
+    print "in try"
+    command = "insert into snippets values (%s, %s)"
+    cursor.execute(command, (name, snippet))
+  except psycopg2.IntegrityError as e:
+    print "In fail"
+    connection.rollback()
+    command = "update snippets set message=%s where keyword=%s"
+    cursor.execute(command, (snippet, name))
+    
+  # Don't forget the commit
   connection.commit()
+  
+  print snippet
+  
   logging.debug("Snippet stored successfully.")
   return name, snippet
 
@@ -33,12 +46,22 @@ def get(name):
   '''
   logging.info("Getting snippet {!r}".format(name))
   #Add the database connection and command statement for the challenge in Unit 2 lesson 1.4
-  cursor = connection.cursor()
-  cursor.execute("SELECT * FROM snippets WHERE keyword = %s", (name))
-  #logging.debug("COMMAND: ".format(command)
-  row = cursor.fetchone()
+  # Added a change - the with - as per unit 2 lesson 1 point 5
+  with connection, connection.cursor() as cursor:
+    cursor.execute("SELECT * FROM snippets WHERE keyword = %s", (name,))
+    row = cursor.fetchone()
+    #logging.debug("COMMAND: ".format(command))
+    
   connection.commit()
   logging.debug("Select snippet retrieved the record successfully.")
+
+## Discuss this error handling with Carl  
+  if not row:
+    logging.debug("The requested snippet '{}' does not exist.".format(name))
+    raise IOError("no snippet named '{}'".format(name))
+   
+  print row[1]
+  
   return row[0]
 
 # Add a snippet for delete?
@@ -64,23 +87,18 @@ def main():
     #Subparser for the get command
     logging.debug("Constructing the 'get' subparser")
     get_parser = subparsers.add_parser("get", help="Store a 'get' snippet")
-    #TO-DO: Check with Carl if I add the name or the snippet here - name seems to make sense
     get_parser.add_argument("name", help="The name of the 'get' snippet")
     
     arguments = parser.parse_args(sys.argv[1:])
     #Convert parsed arguments from the Namespace to dictionary
     arguments = vars(arguments)
     command = arguments.pop("command")
-    # added on Carls advice
-    name = arguments.pop("name")
     
     if command == "put":
       name, snippet = put(**arguments)
       print("Stored {!r} as {!r}".format(snippet, name))
     elif command == "get":
-      #name = get(arguments)
-      # changed on Carls advice
-      result = get(name)
+      result = get(**arguments)
       print("Retrieved snippet: {!r}".format(result))
 
 if __name__ == "__main__":
