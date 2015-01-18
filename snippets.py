@@ -1,3 +1,5 @@
+## TODO: Do the addional challenge in Unit 2 Lesson 1 Point 5
+
 import logging
 import argparse
 import sys
@@ -22,7 +24,7 @@ def put(name, snippet):
   with connection, connection.cursor() as cursor:
     command = "insert into snippets values (%s, %s)"
     cursor.execute(command, (name, snippet))
-    
+
   ## I have removed the try / except becaus the with does the rollback but not the UPDATE. I am a little confused by that
   ## TODO: Chat with Carl
     
@@ -83,9 +85,23 @@ def catalog():
   print rows
 
 # Add a snippet for delete?
-def delete(name):
-  logging.error("FIXME: Unimplemented - delete({!r})".format(name))
-  return name
+def search(snippet):
+  '''
+  Retrieve the snippet with the text that the user provides as search criteria.
+  Return the snippet.
+  '''
+  logging.info("Getting snippet with the serch criteria: {!r}".format(snippet))
+
+  with connection, connection.cursor() as cursor:
+    sql = "SELECT * FROM snippets WHERE message LIKE %s AND hidden = false"
+    arg = ["%"+snippet+"%"]
+    cursor.execute(sql,arg)
+    row = cursor.fetchone()
+    
+    print row[0] + ' - ' + row[1]
+       
+  connection.commit()
+  logging.debug("Select snippet retrieved the record successfully.")
 
   
 def main():
@@ -110,7 +126,12 @@ def main():
      
     #Subparser for the catalog command
     logging.debug("Constructing the 'catalog' subparser")
-    get_parser = subparsers.add_parser("catalog", help="Retrieve all keywords using 'catalog' ")
+    catalog_parser = subparsers.add_parser("catalog", help="Retrieve all keywords using 'catalog' ")
+    
+    #Subparser for the search command
+    logging.debug("Constructing the 'search' subparser")
+    search_parser = subparsers.add_parser("search", help="Retrieve a snippet using 'search'")
+    search_parser.add_argument("snippet", help="The name of the 'search' snippet")
     
     #Subparser commands
     arguments = parser.parse_args(sys.argv[1:])
@@ -126,7 +147,10 @@ def main():
       print("Retrieved snippet: {!r}".format(result))
     elif command == "catalog":
       listing = catalog()
-      #print("Retrieved snippet all keywords form Snippets".format(result))
+      print("Retrieved snippet all keywords form Snippets".format(result))
+    elif command == "search":
+      result = search(**arguments)
+      print("Retrieved snippet: {!r}".format(result))
 
 if __name__ == "__main__":
     main()
